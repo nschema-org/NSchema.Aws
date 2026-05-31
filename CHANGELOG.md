@@ -10,7 +10,7 @@ This package uses **lockstep major versioning** with the core NSchema package: `
 
 As a consequence, breaking changes that are specific to this provider (rather than the core API) are signalled by a **minor version bump** rather than a major one, and called out explicitly in this changelog.
 
-## [Unrelease] - 2026-05-30
+## [Unreleased] - 2026-05-31
 
 Initial version, tracking NSchema 2.0.0.
 
