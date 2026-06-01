@@ -2,7 +2,7 @@
 
 AWS provider for [NSchema](https://github.com/tom-wolfe/NSchema), the declarative database schema migration library for .NET.
 
-This package plugs an S3-backed implementation of NSchema's `ISchemaStateStore` into your application, enabling offline migration planning without live database access — the same model Terraform uses for state.
+This package plugs an S3-backed implementation of NSchema's `ISchemaStateStore` into your application, enabling offline migration planning without live database access.
 
 ## Getting started
 
@@ -24,40 +24,10 @@ var builder = NSchemaApplication.CreateBuilder(args);
 builder
     .AddSchemasFromAssemblyContaining<Program>()
     .UseCurrentSchemaPostgres(connectionString)
-    .UseStateStoreS3("my-bucket", "nschema/state.json")
-    .UseCurrentSchemaAuto();  // live DB when applying, state store when planning
+    .UseStateStoreS3("my-bucket", "nschema/state.json");
 
 var app = builder.Build();
 await app.Apply();
-```
-
-A successful `Apply` automatically captures the resulting live schema back to the state store for the next plan.
-
-## Deploy vs. plan pattern
-
-The primary use case is separating a **deploy** step (which has live database access) from a **plan** step (which doesn't, e.g. a CI pull-request build):
-
-**Deploy** — runs in-VPC with database access, applies and captures state:
-
-```csharp
-builder
-    .AddSchemasFromAssemblyContaining<Program>()
-    .UseCurrentSchemaPostgres(connectionString)
-    .UseStateStoreS3("my-bucket", "nschema/state.json")
-    .UseCurrentSchemaAuto();
-
-await app.Apply();
-```
-
-**Plan (PR build)** — no database access needed, reads state from S3:
-
-```csharp
-builder
-    .AddSchemasFromAssemblyContaining<Program>()
-    .UseStateStoreS3("my-bucket", "nschema/state.json")
-    .UseCurrentSchemaState();  // reads current schema from the state store
-
-await app.Plan();
 ```
 
 ## Configuration
