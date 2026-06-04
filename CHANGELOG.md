@@ -15,6 +15,7 @@ As a consequence, breaking changes that are specific to this provider (rather th
 ### Changed
 
 - **Breaking:** Updated to NSchema 3.0.0, which includes many breaking changes to the core NSchema API.
+- Updated `AWSSDK.S3` from `4.0.23.5` to `4.0.24`.
 
 ## [2.0.0] - 2026-06-01
 
