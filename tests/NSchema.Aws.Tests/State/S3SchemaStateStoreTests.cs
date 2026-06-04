@@ -1,8 +1,7 @@
 using Microsoft.Extensions.Options;
 using NSchema.Aws.State;
 using NSchema.Aws.Tests.Fixtures;
-using NSchema.Schema;
-using NSchema.State;
+using NSchema.Schema.Model;
 
 namespace NSchema.Aws.Tests.State;
 
