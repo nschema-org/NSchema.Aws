@@ -2,7 +2,7 @@ using System.Net;
 using Amazon.S3;
 using Amazon.S3.Model;
 using Microsoft.Extensions.Options;
-using NSchema.Schema;
+using NSchema.Schema.Model;
 using NSchema.State;
 
 namespace NSchema.Aws.State;
