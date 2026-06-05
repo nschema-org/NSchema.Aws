@@ -14,7 +14,7 @@ public sealed class MinioFixture : IAsyncLifetime
     public ISchemaStateSerializer Serializer { get; private set; } = null!;
     public string BucketName { get; } = $"nschema-test-{Guid.NewGuid():N}";
 
-    public async Task InitializeAsync()
+    public async ValueTask InitializeAsync()
     {
         await _container.StartAsync();
 
@@ -34,7 +34,7 @@ public sealed class MinioFixture : IAsyncLifetime
             .GetRequiredService<ISchemaStateSerializer>();
     }
 
-    public async Task DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
         S3.Dispose();
         await _container.DisposeAsync();
