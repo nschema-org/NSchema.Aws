@@ -25,7 +25,7 @@ public sealed class S3SchemaStateStoreTests(MinioFixture fixture)
     {
         var sut = CreateSut();
 
-        var result = await sut.Read();
+        var result = await sut.Read(TestContext.Current.CancellationToken);
 
         result.ShouldBeNull();
     }
@@ -36,8 +36,8 @@ public sealed class S3SchemaStateStoreTests(MinioFixture fixture)
         var sut = CreateSut();
         var original = SampleSchema();
 
-        await sut.Write(original);
-        var result = await sut.Read();
+        await sut.Write(original, TestContext.Current.CancellationToken);
+        var result = await sut.Read(TestContext.Current.CancellationToken);
 
         result.ShouldNotBeNull();
         fixture.Serializer.Serialize(result).ShouldBe(fixture.Serializer.Serialize(original));
@@ -52,9 +52,9 @@ public sealed class S3SchemaStateStoreTests(MinioFixture fixture)
         var second = DatabaseSchema.Create(
             [SchemaDefinition.Create("app", tables: [Table.Create("orders", columns: [Column.Create("id", SqlType.Int)])])]);
 
-        await sut.Write(first);
-        await sut.Write(second);
-        var result = await sut.Read();
+        await sut.Write(first, TestContext.Current.CancellationToken);
+        await sut.Write(second, TestContext.Current.CancellationToken);
+        var result = await sut.Read(TestContext.Current.CancellationToken);
 
         result.ShouldNotBeNull();
         result.Schemas[0].Tables[0].Name.ShouldBe("orders");
