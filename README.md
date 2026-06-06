@@ -24,7 +24,7 @@ var builder = NSchemaApplication.CreateBuilder(args);
 builder
     .AddSchemasFromAssemblyContaining<Program>()
     .UseCurrentSchemaPostgres(connectionString)
-    .UseStateStoreS3("my-bucket", "nschema/state.json");
+    .UseS3StateStore("my-bucket", "nschema/state.json");
 
 var app = builder.Build();
 await app.Apply();
@@ -46,7 +46,7 @@ builder.UseStateStoreS3(o =>
 });
 
 // 3. As above, with access to the IServiceProvider.
-builder.UseStateStoreS3((o, sp) =>
+builder.UseS3StateStore((o, sp) =>
 {
     var config = sp.GetRequiredService<IConfiguration>();
     o.Bucket = config["NSchema:Bucket"]!;
@@ -59,7 +59,7 @@ By default an `AmazonS3Client` using ambient credentials (ECS task role, Lambda 
 ```csharp
 // Register via AWSSDK.Extensions.NETCore.Setup before calling UseStateStoreS3.
 builder.Services.AddAWSService<IAmazonS3>();
-builder.UseStateStoreS3("my-bucket", "nschema/state.json");
+builder.UseS3StateStore("my-bucket", "nschema/state.json");
 ```
 
 ## IAM permissions

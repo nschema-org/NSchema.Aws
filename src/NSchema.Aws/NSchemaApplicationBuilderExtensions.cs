@@ -24,23 +24,23 @@ public static class NSchemaApplicationBuilderExtensions
         /// State writes are last-write-wins. Concurrent applies will silently overwrite each other's state.
         /// </para>
         /// </remarks>
-        public NSchemaApplicationBuilder UseStateStoreS3(string bucket, string key) => builder
-            .UseStateStoreS3(o => { o.Bucket = bucket; o.Key = key; });
+        public NSchemaApplicationBuilder UseS3StateStore(string bucket, string key) => builder
+            .UseS3StateStore(o => { o.Bucket = bucket; o.Key = key; });
 
         /// <summary>
         /// Configures NSchema to use an S3 object as the schema state store with an explicit S3 client.
         /// </summary>
         /// <param name="configure">A delegate that can be used to configure the S3 schema state store options.</param>
         /// <returns>The <see cref="NSchemaApplicationBuilder"/> instance, allowing for method chaining.</returns>
-        public NSchemaApplicationBuilder UseStateStoreS3(Action<S3SchemaStateStoreOptions> configure) => builder
-            .UseStateStoreS3((o, _) => configure(o));
+        public NSchemaApplicationBuilder UseS3StateStore(Action<S3SchemaStateStoreOptions> configure) => builder
+            .UseS3StateStore((o, _) => configure(o));
 
         /// <summary>
         /// Configures NSchema to use an S3 object as the schema state store with an explicit S3 client.
         /// </summary>
         /// <param name="configure">A delegate that can be used to configure the S3 schema state store options.</param>
         /// <returns>The <see cref="NSchemaApplicationBuilder"/> instance, allowing for method chaining.</returns>
-        public NSchemaApplicationBuilder UseStateStoreS3(Action<S3SchemaStateStoreOptions, IServiceProvider> configure)
+        public NSchemaApplicationBuilder UseS3StateStore(Action<S3SchemaStateStoreOptions, IServiceProvider> configure)
         {
             builder.Services.TryAddSingleton<IAmazonS3, AmazonS3Client>();
             builder.Services.AddOptions<S3SchemaStateStoreOptions>().Configure(configure);
