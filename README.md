@@ -1,6 +1,10 @@
+# ![NSchema](https://raw.githubusercontent.com/nschema-org/NSchema.Core/main/assets/nschema-logo-horizontal.png)
+
+[![NSchema.Aws](https://github.com/nschema-org/NSchema.Aws/actions/workflows/cicd.yml/badge.svg)](https://github.com/nschema-org/NSchema.Aws/actions/workflows/cicd.yml)
+
 # NSchema.Aws
 
-AWS provider for [NSchema](https://github.com/tom-wolfe/NSchema), the declarative database schema migration library for .NET.
+AWS provider for [NSchema](https://github.com/nschema-org/NSchema.Core), the declarative database schema migration library for .NET.
 
 This package plugs an S3-backed implementation of NSchema's `ISchemaStateStore` into your application, enabling offline migration planning without live database access.
 
@@ -9,7 +13,7 @@ This package plugs an S3-backed implementation of NSchema's `ISchemaStateStore` 
 Install the core package and this provider:
 
 ```bash
-dotnet add package NSchema
+dotnet add package NSchema.Core
 dotnet add package NSchema.Aws
 ```
 
