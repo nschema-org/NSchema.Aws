@@ -1,7 +1,8 @@
+using System.Text;
 using Microsoft.Extensions.Options;
 using NSchema.Aws.State;
 using NSchema.Aws.Tests.Fixtures;
-using NSchema.Schema.Model;
+using NSchema.State;
 
 namespace NSchema.Aws.Tests.State;
 
@@ -14,11 +15,9 @@ public sealed class S3SchemaStateStoreTests(MinioFixture fixture)
             Bucket = fixture.BucketName,
             Key = key ?? $"state/{Guid.NewGuid():N}.json",
         }),
-        fixture.S3,
-        fixture.Serializer);
+        fixture.S3);
 
-    private static DatabaseSchema SampleSchema() => DatabaseSchema.Create(
-        [SchemaDefinition.Create("app", tables: [Table.Create("users", columns: [Column.Create("id", SqlType.Int)])])]);
+    private static ReadOnlyMemory<byte> Payload(string content) => Encoding.UTF8.GetBytes(content);
 
     [Fact]
     public async Task Read_MissingObject_ReturnsNull()
@@ -31,16 +30,16 @@ public sealed class S3SchemaStateStoreTests(MinioFixture fixture)
     }
 
     [Fact]
-    public async Task Write_ThenRead_RoundTripsTheSchema()
+    public async Task Write_ThenRead_RoundTripsTheState()
     {
         var sut = CreateSut();
-        var original = SampleSchema();
+        var original = Payload("""{"schema":"v1"}""");
 
         await sut.Write(original, TestContext.Current.CancellationToken);
         var result = await sut.Read(TestContext.Current.CancellationToken);
 
         result.ShouldNotBeNull();
-        fixture.Serializer.Serialize(result).ShouldBe(fixture.Serializer.Serialize(original));
+        result.Value.ToArray().ShouldBe(original.ToArray());
     }
 
     [Fact]
@@ -48,15 +47,86 @@ public sealed class S3SchemaStateStoreTests(MinioFixture fixture)
     {
         var key = $"state/{Guid.NewGuid():N}.json";
         var sut = CreateSut(key);
-        var first = SampleSchema();
-        var second = DatabaseSchema.Create(
-            [SchemaDefinition.Create("app", tables: [Table.Create("orders", columns: [Column.Create("id", SqlType.Int)])])]);
+        var second = Payload("""{"schema":"v2"}""");
 
-        await sut.Write(first, TestContext.Current.CancellationToken);
+        await sut.Write(Payload("""{"schema":"v1"}"""), TestContext.Current.CancellationToken);
         await sut.Write(second, TestContext.Current.CancellationToken);
         var result = await sut.Read(TestContext.Current.CancellationToken);
 
         result.ShouldNotBeNull();
-        result.Schemas[0].Tables[0].Name.ShouldBe("orders");
+        result.Value.ToArray().ShouldBe(second.ToArray());
+    }
+
+    [Fact]
+    public async Task Acquire_WhenUnlocked_ReturnsHandle()
+    {
+        var sut = CreateSut();
+
+        await using var handle = await sut.Acquire(new StateLockRequest("apply"), TestContext.Current.CancellationToken);
+
+        handle.LockId.ShouldNotBeNullOrEmpty();
+    }
+
+    [Fact]
+    public async Task Acquire_WhenAlreadyLocked_ThrowsWithExistingLockInfo()
+    {
+        var sut = CreateSut();
+        await using var first = await sut.Acquire(new StateLockRequest("apply"), TestContext.Current.CancellationToken);
+
+        var ex = await Should.ThrowAsync<StateLockedException>(
+            () => sut.Acquire(new StateLockRequest("destroy"), TestContext.Current.CancellationToken));
+
+        ex.ExistingLock.ShouldNotBeNull();
+        ex.ExistingLock.Operation.ShouldBe("apply");
+        ex.ExistingLock.Id.ShouldBe(first.LockId);
+    }
+
+    [Fact]
+    public async Task Acquire_AfterReleasingHandle_Succeeds()
+    {
+        var key = $"state/{Guid.NewGuid():N}.json";
+        var sut = CreateSut(key);
+
+        var first = await sut.Acquire(new StateLockRequest("apply"), TestContext.Current.CancellationToken);
+        await first.DisposeAsync();
+
+        await using var second = await sut.Acquire(new StateLockRequest("apply"), TestContext.Current.CancellationToken);
+        second.LockId.ShouldNotBe(first.LockId);
+    }
+
+    [Fact]
+    public async Task DisposeHandle_IsIdempotent()
+    {
+        var sut = CreateSut();
+        var handle = await sut.Acquire(new StateLockRequest("apply"), TestContext.Current.CancellationToken);
+
+        await handle.DisposeAsync();
+        await Should.NotThrowAsync(async () => await handle.DisposeAsync());
+    }
+
+    [Fact]
+    public async Task ForceUnlock_WhenLocked_RemovesLockAndReturnsInfo()
+    {
+        var sut = CreateSut();
+        await sut.Acquire(new StateLockRequest("apply"), TestContext.Current.CancellationToken);
+
+        var removed = await sut.ForceUnlock(TestContext.Current.CancellationToken);
+
+        removed.ShouldNotBeNull();
+        removed.Operation.ShouldBe("apply");
+
+        // The lock is now free to re-acquire.
+        await using var handle = await sut.Acquire(new StateLockRequest("apply"), TestContext.Current.CancellationToken);
+        handle.LockId.ShouldNotBeNullOrEmpty();
+    }
+
+    [Fact]
+    public async Task ForceUnlock_WhenNotLocked_ReturnsNull()
+    {
+        var sut = CreateSut();
+
+        var removed = await sut.ForceUnlock(TestContext.Current.CancellationToken);
+
+        removed.ShouldBeNull();
     }
 }
