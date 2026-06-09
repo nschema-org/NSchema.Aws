@@ -12,10 +12,14 @@ As a consequence, breaking changes that are specific to this provider (rather th
 
 ## [Unreleased]
 
+### Added
+
+- Support for locking using `If-None-Match` to prevent concurrent modifications to the state store.
+
 ### Changed
 
 - **Breaking:** Updated to NSchema 3.0.0, which includes many breaking changes to the core NSchema API.
-- Updated `AWSSDK.S3` from `4.0.23.5` to `4.0.24.1`.
+- Updated `AWSSDK.S3` from `4.0.23.5` to `4.0.24.2`.
 
 ## [2.0.0] - 2026-06-01
 
