@@ -4,7 +4,7 @@
     <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
   </PropertyGroup>
   <ItemGroup>
-    <PackageVersion Include="AWSSDK.S3" Version="4.0.24.2" />
+    <PackageVersion Include="AWSSDK.S3" Version="4.0.25.2" />
     <PackageVersion Include="AWSSDK.SSO" Version="4.0.3.7" />
     <PackageVersion Include="AWSSDK.SSOOIDC" Version="4.0.4.9" />
     <PackageVersion Include="coverlet.collector" Version="10.0.1" />
