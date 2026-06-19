@@ -2,7 +2,7 @@ using System.Text;
 using Microsoft.Extensions.Options;
 using NSchema.Aws.State;
 using NSchema.Aws.Tests.Fixtures;
-using NSchema.State;
+using NSchema.State.Model;
 
 namespace NSchema.Aws.Tests.State;
 
