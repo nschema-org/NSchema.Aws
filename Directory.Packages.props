@@ -5,6 +5,8 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageVersion Include="AWSSDK.S3" Version="4.0.24.2" />
+    <PackageVersion Include="AWSSDK.SSO" Version="4.0.3.7" />
+    <PackageVersion Include="AWSSDK.SSOOIDC" Version="4.0.4.9" />
     <PackageVersion Include="coverlet.collector" Version="10.0.1" />
     <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="10.0.300" />
     <PackageVersion Include="NSchema.Core" Version="3.0.0-beta.1" />
