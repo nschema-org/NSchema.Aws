@@ -10,7 +10,7 @@ This package uses **lockstep major versioning** with the core NSchema package: `
 
 As a consequence, breaking changes that are specific to this provider (rather than the core API) are signalled by a **minor version bump** rather than a major one, and called out explicitly in this changelog.
 
-## [Unreleased]
+## [3.0.0] - 2026-06-20
 
 ### Added
 
@@ -19,7 +19,7 @@ As a consequence, breaking changes that are specific to this provider (rather th
 ### Changed
 
 - **Breaking:** Updated to NSchema 3.0.0, which includes many breaking changes to the core NSchema API.
-- Updated `AWSSDK.S3` from `4.0.23.5` to `4.0.24.2`.
+- Updated `AWSSDK.S3` from `4.0.23.5` to `4.0.25.2`.
 
 ## [2.0.0] - 2026-06-01
 
@@ -28,3 +28,6 @@ Initial version, tracking NSchema 2.0.0.
 ### Added
 
 - `UseStateStoreS3(...)` builder extensions for configuring an S3 state store with bucket and key.
+
+[3.0.0]: https://github.com/nschema-org/NSchema.Aws/compare/v2.0.0...v3.0.0
+[2.0.0]: https://github.com/nschema-org/NSchema.Aws/releases/tag/v2.0.0
