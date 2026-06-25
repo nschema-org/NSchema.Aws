@@ -10,6 +10,16 @@ This package uses **lockstep major versioning** with the core NSchema package: `
 
 As a consequence, breaking changes that are specific to this provider (rather than the core API) are signalled by a **minor version bump** rather than a major one, and called out explicitly in this changelog.
 
+## [3.2.0] - 2026-06-25
+
+### Added
+
+- Implemented `IStateLock.Peek` on the S3 state lock: reads the held lock without acquiring it.
+
+### Changed
+
+- Updated to `NSchema 3.4.0`.
+
 ## [3.1.0] - 2026-06-24
 
 ### Added
@@ -24,7 +34,7 @@ As a consequence, breaking changes that are specific to this provider (rather th
 
 ### Changed
 
-- **Breaking:** Updated to NSchema 3.0.0, which includes many breaking changes to the core NSchema API.
+- **Breaking:** Updated to `NSchema 3.0.0`, which includes many breaking changes to the core NSchema API.
 - Updated `AWSSDK.S3` from `4.0.23.5` to `4.0.25.2`.
 
 ## [2.0.0] - 2026-06-01
