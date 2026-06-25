@@ -129,4 +129,31 @@ public sealed class S3SchemaStateStoreTests(MinioFixture fixture)
 
         removed.ShouldBeNull();
     }
+
+    [Fact]
+    public async Task Peek_WhenLocked_ReturnsInfoWithoutRemovingTheLock()
+    {
+        var sut = CreateSut();
+        await using var handle = await sut.Acquire(new StateLockRequest("apply"), TestContext.Current.CancellationToken);
+
+        var info = await sut.Peek(TestContext.Current.CancellationToken);
+
+        info.ShouldNotBeNull();
+        info.Operation.ShouldBe("apply");
+        info.Id.ShouldBe(handle.LockId);
+
+        // Peek is read-only: the lock is still held, so a fresh acquire is rejected.
+        await Should.ThrowAsync<StateLockedException>(
+            () => sut.Acquire(new StateLockRequest("destroy"), TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
+    public async Task Peek_WhenNotLocked_ReturnsNull()
+    {
+        var sut = CreateSut();
+
+        var info = await sut.Peek(TestContext.Current.CancellationToken);
+
+        info.ShouldBeNull();
+    }
 }

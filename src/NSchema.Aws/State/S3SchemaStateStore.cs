@@ -73,6 +73,11 @@ internal sealed class S3SchemaStateStore(IOptions<S3SchemaStateStoreOptions> opt
     }
 
     /// <inheritdoc />
+    /// <inheritdoc />
+    public Task<StateLockInfo?> Peek(CancellationToken cancellationToken = default) =>
+        ReadLockInfo(cancellationToken);
+
+    /// <inheritdoc />
     public async Task<StateLockInfo?> ForceUnlock(CancellationToken cancellationToken = default)
     {
         var existing = await ReadLockInfo(cancellationToken);
