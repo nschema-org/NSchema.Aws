@@ -62,23 +62,23 @@ public sealed class S3SchemaStateStoreTests(MinioFixture fixture)
     {
         var sut = CreateSut();
 
-        await using var handle = await sut.Acquire(new StateLockRequest("apply"), TestContext.Current.CancellationToken);
+        var handle = await sut.Acquire(new StateLockRequest("apply"), TestContext.Current.CancellationToken);
 
-        handle.LockId.ShouldNotBeNullOrEmpty();
+        handle.Info.Id.ShouldNotBeNullOrEmpty();
     }
 
     [Fact]
     public async Task Acquire_WhenAlreadyLocked_ThrowsWithExistingLockInfo()
     {
         var sut = CreateSut();
-        await using var first = await sut.Acquire(new StateLockRequest("apply"), TestContext.Current.CancellationToken);
+        var first = await sut.Acquire(new StateLockRequest("apply"), TestContext.Current.CancellationToken);
 
         var ex = await Should.ThrowAsync<StateLockedException>(
             () => sut.Acquire(new StateLockRequest("destroy"), TestContext.Current.CancellationToken));
 
         ex.ExistingLock.ShouldNotBeNull();
         ex.ExistingLock.Operation.ShouldBe("apply");
-        ex.ExistingLock.Id.ShouldBe(first.LockId);
+        ex.ExistingLock.Id.ShouldBe(first.Info.Id);
     }
 
     [Fact]
@@ -88,59 +88,55 @@ public sealed class S3SchemaStateStoreTests(MinioFixture fixture)
         var sut = CreateSut(key);
 
         var first = await sut.Acquire(new StateLockRequest("apply"), TestContext.Current.CancellationToken);
-        await first.DisposeAsync();
+        await first.Release(TestContext.Current.CancellationToken);
 
-        await using var second = await sut.Acquire(new StateLockRequest("apply"), TestContext.Current.CancellationToken);
-        second.LockId.ShouldNotBe(first.LockId);
+        var second = await sut.Acquire(new StateLockRequest("apply"), TestContext.Current.CancellationToken);
+        second.Info.Id.ShouldNotBe(first.Info.Id);
     }
 
     [Fact]
-    public async Task DisposeHandle_IsIdempotent()
+    public async Task ReleaseHandle_IsIdempotent()
     {
         var sut = CreateSut();
         var handle = await sut.Acquire(new StateLockRequest("apply"), TestContext.Current.CancellationToken);
 
-        await handle.DisposeAsync();
-        await Should.NotThrowAsync(async () => await handle.DisposeAsync());
+        await handle.Release(TestContext.Current.CancellationToken);
+        await Should.NotThrowAsync(async () => await handle.Release(TestContext.Current.CancellationToken));
     }
 
     [Fact]
-    public async Task ForceUnlock_WhenLocked_RemovesLockAndReturnsInfo()
+    public async Task Release_WhenLocked_RemovesLock()
     {
         var sut = CreateSut();
         await sut.Acquire(new StateLockRequest("apply"), TestContext.Current.CancellationToken);
 
-        var removed = await sut.ForceUnlock(TestContext.Current.CancellationToken);
-
-        removed.ShouldNotBeNull();
-        removed.Operation.ShouldBe("apply");
+        await sut.Release(TestContext.Current.CancellationToken);
 
         // The lock is now free to re-acquire.
-        await using var handle = await sut.Acquire(new StateLockRequest("apply"), TestContext.Current.CancellationToken);
-        handle.LockId.ShouldNotBeNullOrEmpty();
+        (await sut.Peek(TestContext.Current.CancellationToken)).ShouldBeNull();
+        var handle = await sut.Acquire(new StateLockRequest("apply"), TestContext.Current.CancellationToken);
+        handle.Info.Id.ShouldNotBeNullOrEmpty();
     }
 
     [Fact]
-    public async Task ForceUnlock_WhenNotLocked_ReturnsNull()
+    public async Task Release_WhenNotLocked_DoesNothing()
     {
         var sut = CreateSut();
 
-        var removed = await sut.ForceUnlock(TestContext.Current.CancellationToken);
-
-        removed.ShouldBeNull();
+        await Should.NotThrowAsync(async () => await sut.Release(TestContext.Current.CancellationToken));
     }
 
     [Fact]
     public async Task Peek_WhenLocked_ReturnsInfoWithoutRemovingTheLock()
     {
         var sut = CreateSut();
-        await using var handle = await sut.Acquire(new StateLockRequest("apply"), TestContext.Current.CancellationToken);
+        var handle = await sut.Acquire(new StateLockRequest("apply"), TestContext.Current.CancellationToken);
 
         var info = await sut.Peek(TestContext.Current.CancellationToken);
 
         info.ShouldNotBeNull();
         info.Operation.ShouldBe("apply");
-        info.Id.ShouldBe(handle.LockId);
+        info.Id.ShouldBe(handle.Info.Id);
 
         // Peek is read-only: the lock is still held, so a fresh acquire is rejected.
         await Should.ThrowAsync<StateLockedException>(

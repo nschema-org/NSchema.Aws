@@ -40,11 +40,13 @@ internal sealed class S3SchemaStateStore(IOptions<S3SchemaStateStoreOptions> opt
     /// <inheritdoc />
     public async Task<IStateLockHandle> Acquire(StateLockRequest request, CancellationToken cancellationToken = default)
     {
+        var now = DateTimeOffset.UtcNow;
         var info = new StateLockInfo(
             Id: Guid.NewGuid().ToString("N"),
             Operation: request.Operation,
             Who: $"{Environment.UserName}@{Environment.MachineName}",
-            CreatedUtc: DateTimeOffset.UtcNow
+            CreatedUtc: now,
+            ExpiresUtc: request.TimeToLive is { } ttl ? now + ttl : null
         );
 
         try
@@ -69,7 +71,7 @@ internal sealed class S3SchemaStateStore(IOptions<S3SchemaStateStoreOptions> opt
                 existing!);
         }
 
-        return new Handle(this, info.Id);
+        return new Handle(this, info);
     }
 
     /// <inheritdoc />
@@ -78,17 +80,8 @@ internal sealed class S3SchemaStateStore(IOptions<S3SchemaStateStoreOptions> opt
         ReadLockInfo(cancellationToken);
 
     /// <inheritdoc />
-    public async Task<StateLockInfo?> ForceUnlock(CancellationToken cancellationToken = default)
-    {
-        var existing = await ReadLockInfo(cancellationToken);
-        if (existing is null)
-        {
-            return null;
-        }
-
-        await ReleaseLock(cancellationToken);
-        return existing;
-    }
+    public ValueTask Release(CancellationToken cancellationToken = default) =>
+        new(ReleaseLock(cancellationToken));
 
     private async Task<ReadOnlyMemory<byte>?> ReadObject(string key, CancellationToken cancellationToken)
     {
@@ -123,18 +116,18 @@ internal sealed class S3SchemaStateStore(IOptions<S3SchemaStateStoreOptions> opt
             Key = LockKey,
         }, cancellationToken);
 
-    private sealed class Handle(S3SchemaStateStore store, string lockId) : IStateLockHandle
+    private sealed class Handle(S3SchemaStateStore store, StateLockInfo info) : IStateLockHandle
     {
         private int _released;
 
-        public string LockId => lockId;
+        public StateLockInfo Info => info;
 
-        public async ValueTask DisposeAsync()
+        public async ValueTask Release(CancellationToken cancellationToken = default)
         {
-            // Disposal is idempotent: only the first call releases the lock.
+            // Release is idempotent: only the first call deletes the lock object.
             if (Interlocked.Exchange(ref _released, 1) == 0)
             {
-                await store.ReleaseLock();
+                await store.ReleaseLock(cancellationToken);
             }
         }
     }
