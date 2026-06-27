@@ -15,6 +15,13 @@ As a consequence, breaking changes that are specific to this provider (rather th
 ### Added
 
 - Added plugin manifest to allow for automatic registration of the backend coming in `NSchema 4.0.0.
+- The S3 lock now records an optional expiry (`StateLockInfo.ExpiresUtc`) when the lock request carries a time-to-live.
+
+### Changed
+
+- **Updated to the `NSchema.Core 4.0.0` lock contract.** The S3 state-lock handle releases via the explicit
+  `IStateLockHandle.Release(...)` (the handle is no longer `IAsyncDisposable`), and `IStateLock.ForceUnlock` is renamed
+  to `IStateLock.Release` (returning `ValueTask`).
 
 ## [3.2.0] - 2026-06-25
 
