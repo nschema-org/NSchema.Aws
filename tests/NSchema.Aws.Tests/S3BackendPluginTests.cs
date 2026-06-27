@@ -20,6 +20,20 @@ public sealed class S3BackendPluginTests
         => _sut.GetScaffoldTemplate(new ScaffoldContext()).ShouldContain("BACKEND s3");
 
     [Fact]
+    public void GetScaffoldTemplate_WithVersion_PinsIt()
+        => _sut.GetScaffoldTemplate(new ScaffoldContext { Version = "9.9.9" }).ShouldContain("version = '9.9.9',");
+
+    [Fact]
+    public void GetScaffoldTemplate_ForEnvironment_NamespacesTheKey()
+    {
+        // An environment overlay restates the backend with an environment-scoped key so each environment keeps its
+        // own state object.
+        var overlay = _sut.GetScaffoldTemplate(new ScaffoldContext { EnvironmentName = "prod" });
+
+        overlay.ShouldContain("key     = 'prod/nschema.state.json'");
+    }
+
+    [Fact]
     public void Configure_ValidBucketAndKey_SucceedsAndRegistersStateStore()
     {
         // Arrange
