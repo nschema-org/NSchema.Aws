@@ -20,7 +20,7 @@ public sealed class S3BackendPluginEndToEndTests(MinioFixture fixture)
     public async Task Configure_ThroughThePlugin_RoundTripsStateAgainstS3()
     {
         // Arrange — a host whose S3 client points at MinIO, configured ONLY through the plugin manifest.
-        var builder = NSchemaApplication.CreateBuilder(new NSchemaApplicationOptions { ExceptionBehavior = ExceptionBehavior.Throw });
+        var builder = NSchemaApplication.CreateBuilder();
         builder.Services.AddSingleton(fixture.S3);
 
         var key = $"e2e/{Guid.NewGuid():N}.json";
