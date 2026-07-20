@@ -2,7 +2,7 @@ using System.Text;
 using Microsoft.Extensions.Options;
 using NSchema.Aws.State;
 using NSchema.Aws.Tests.Fixtures;
-using NSchema.State.Model;
+using NSchema.State.Locks;
 
 namespace NSchema.Aws.Tests.State;
 
@@ -64,7 +64,7 @@ public sealed class S3SchemaStateStoreTests(MinioFixture fixture)
 
         var handle = await sut.Acquire(new StateLockRequest("apply"), TestContext.Current.CancellationToken);
 
-        handle.Info.Id.ShouldNotBeNullOrEmpty();
+        handle.Info.Id.Value.ShouldNotBeNullOrEmpty();
     }
 
     [Fact]
@@ -115,7 +115,7 @@ public sealed class S3SchemaStateStoreTests(MinioFixture fixture)
         // The lock is now free to re-acquire.
         (await sut.Peek(TestContext.Current.CancellationToken)).ShouldBeNull();
         var handle = await sut.Acquire(new StateLockRequest("apply"), TestContext.Current.CancellationToken);
-        handle.Info.Id.ShouldNotBeNullOrEmpty();
+        handle.Info.Id.Value.ShouldNotBeNullOrEmpty();
     }
 
     [Fact]

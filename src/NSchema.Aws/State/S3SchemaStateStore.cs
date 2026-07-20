@@ -3,16 +3,17 @@ using System.Text.Json;
 using Amazon.S3;
 using Amazon.S3.Model;
 using Microsoft.Extensions.Options;
-using NSchema.State;
-using NSchema.State.Model;
+using NSchema.State.Backends;
+using NSchema.State.Locks;
+using NSchema.State.Locks.Backends;
 
 namespace NSchema.Aws.State;
 
 /// <summary>
-/// An <see cref="ISchemaStateStore"/> that persists the schema snapshot to an S3 object, and an
+/// An <see cref="IDatabaseStateStore"/> that persists the schema snapshot to an S3 object, and an
 /// <see cref="IStateLock"/> that coordinates exclusive access to that state via a sibling lock object.
 /// </summary>
-internal sealed class S3SchemaStateStore(IOptions<S3SchemaStateStoreOptions> options, IAmazonS3 s3) : ISchemaStateStore, IStateLock
+internal sealed class S3SchemaStateStore(IOptions<S3SchemaStateStoreOptions> options, IAmazonS3 s3) : IDatabaseStateStore, IStateLock
 {
     private string Bucket => options.Value.Bucket;
 
@@ -42,9 +43,9 @@ internal sealed class S3SchemaStateStore(IOptions<S3SchemaStateStoreOptions> opt
     {
         var now = DateTimeOffset.UtcNow;
         var info = new StateLockInfo(
-            Id: Guid.NewGuid().ToString("N"),
+            Id: LockId.New(),
             Operation: request.Operation,
-            Who: $"{Environment.UserName}@{Environment.MachineName}",
+            Who: LockHolder.Current(),
             CreatedUtc: now,
             ExpiresUtc: request.TimeToLive is { } ttl ? now + ttl : null
         );
@@ -74,7 +75,6 @@ internal sealed class S3SchemaStateStore(IOptions<S3SchemaStateStoreOptions> opt
         return new Handle(this, info);
     }
 
-    /// <inheritdoc />
     /// <inheritdoc />
     public Task<StateLockInfo?> Peek(CancellationToken cancellationToken = default) =>
         ReadLockInfo(cancellationToken);
