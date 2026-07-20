@@ -9,6 +9,14 @@ public sealed class S3StatePlugin : INSchemaStatePlugin
 {
     private const string Source = "s3";
 
+    /// <summary>The settings a STATE statement binds onto.</summary>
+    private sealed class S3Settings
+    {
+        public string? Bucket { get; set; }
+        public string? Key { get; set; }
+        public bool ForcePathStyle { get; set; }
+    }
+
     /// <inheritdoc />
     public string GetScaffoldTemplate(ScaffoldContext context)
     {
@@ -32,55 +40,26 @@ public sealed class S3StatePlugin : INSchemaStatePlugin
     /// <inheritdoc />
     public Result Configure(NSchemaApplicationBuilder builder, PluginConfig config)
     {
-        var errors = new List<Diagnostic>();
-        var bucket = "";
-        var key = "";
-        var forcePathStyle = false;
+        var bound = config.Bind<S3Settings>();
+        var diagnostics = new List<Diagnostic>(bound.Diagnostics);
+        var settings = bound.Value!;
 
-        // 'key' is an S3 attribute name here, so the loop variable is named 'attribute' to avoid shadowing it.
-        foreach (var (attribute, value) in config.Attributes)
+        if (string.IsNullOrEmpty(settings.Bucket))
         {
-            if (attribute == "bucket")
-            {
-                bucket = value.AsString();
-            }
-            else if (attribute == "key")
-            {
-                key = value.AsString();
-            }
-            else if (attribute == "force_path_style")
-            {
-                if (value.Kind is ConfigValueKind.Boolean)
-                {
-                    forcePathStyle = value.AsBoolean();
-                }
-                else
-                {
-                    errors.Add(Diagnostic.Error(Source, "STATE s3: force_path_style must be a boolean."));
-                }
-            }
-            else
-            {
-                errors.Add(Diagnostic.Error(Source, $"STATE s3: unknown attribute '{attribute}'."));
-            }
+            diagnostics.Add(Diagnostic.Error(Source, "STATE s3: bucket is required."));
         }
 
-        if (string.IsNullOrEmpty(bucket))
+        if (string.IsNullOrEmpty(settings.Key))
         {
-            errors.Add(Diagnostic.Error(Source, "STATE s3: bucket is required."));
+            diagnostics.Add(Diagnostic.Error(Source, "STATE s3: key is required."));
         }
 
-        if (string.IsNullOrEmpty(key))
+        if (diagnostics.Any(d => d.Severity == DiagnosticSeverity.Error))
         {
-            errors.Add(Diagnostic.Error(Source, "STATE s3: key is required."));
+            return Result.From(diagnostics);
         }
 
-        if (errors.Count > 0)
-        {
-            return Result.From(errors);
-        }
-
-        builder.UseS3StateStore(bucket, key, clientConfig => clientConfig.ForcePathStyle = forcePathStyle);
-        return Result.Success();
+        builder.UseS3StateStore(settings.Bucket!, settings.Key!, clientConfig => clientConfig.ForcePathStyle = settings.ForcePathStyle);
+        return Result.From(diagnostics);
     }
 }
