@@ -39,17 +39,8 @@ internal sealed class S3SchemaStateStore(IOptions<S3SchemaStateStoreOptions> opt
         }, cancellationToken);
 
     /// <inheritdoc />
-    public async Task<IStateLockHandle> Acquire(StateLockRequest request, CancellationToken cancellationToken = default)
+    public async Task<IStateLockHandle> Acquire(StateLockInfo info, CancellationToken cancellationToken = default)
     {
-        var now = DateTimeOffset.UtcNow;
-        var info = new StateLockInfo(
-            Id: LockId.New(),
-            Operation: request.Operation,
-            Who: LockHolder.Current(),
-            CreatedUtc: now,
-            ExpiresUtc: request.TimeToLive is { } ttl ? now + ttl : null
-        );
-
         try
         {
             await s3.PutObjectAsync(new PutObjectRequest
