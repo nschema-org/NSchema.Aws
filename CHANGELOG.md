@@ -10,6 +10,15 @@ This package uses **lockstep major versioning** with the core NSchema package: `
 
 As a consequence, breaking changes that are specific to this provider (rather than the core API) are signalled by a **minor version bump** rather than a major one, and called out explicitly in this changelog.
 
+## [Unreleased]
+
+### Changed
+
+- **Updated to `NSchema.Core 5.0.0-alpha.1`**, which is a major rearchitecture of the core API.
+- **`S3StatePlugin` replaces `S3BackendPlugin`**, implementing the new `INSchemaStatePlugin` contract.
+- **The plugin is configured by a `STATE s3` block** instead of `BACKEND s3`, and the scaffold template renders the new form. The scaffold no longer pins a version in the block — the host authors the `PLUGIN` statement.
+- The S3 state store implements the renamed `IDatabaseStateStore` (was `ISchemaStateStore`), and the lock's `StateLockInfo` carries the new `LockId`/`LockHolder` value objects.
+
 ## [4.0.0] - 2026-07-01
 
 ### Added

@@ -6,7 +6,7 @@
 
 AWS provider for [NSchema](https://github.com/nschema-org/NSchema), the declarative database schema migration tool for .NET. It provides an S3-backed state store, enabling offline migration planning and shared state across a team or CI.
 
-Most users should use the [NSchema CLI](https://github.com/nschema-org/NSchema), which already includes this backend — configure it with a `BACKEND s3` block. Add this package directly only when [embedding the engine](https://nschema.dev/library/embedding/) in your own application.
+Most users should use the [NSchema CLI](https://github.com/nschema-org/NSchema), which already includes this backend — configure it with a `STATE s3` block. Add this package directly only when [embedding the engine](https://nschema.dev/library/embedding/) in your own application.
 
 ## Installation
 
