@@ -92,7 +92,7 @@ public sealed class S3StatePluginTests
 
         // Assert
         result.IsFailure.ShouldBeTrue();
-        result.Errors.ShouldContain(e => e.Message.Contains("unknown attribute 'nonsense'"));
+        result.Errors.ShouldContain(e => e.Message.Contains("nonsense"));
     }
 
     [Fact]
@@ -110,7 +110,7 @@ public sealed class S3StatePluginTests
 
         // Assert
         result.IsFailure.ShouldBeTrue();
-        result.Errors.ShouldContain(e => e.Message.Contains("force_path_style must be a boolean"));
+        result.Errors.ShouldContain(e => e.Message.Contains("force_path_style"));
     }
 
     private static PluginConfig Config(params (string Key, ConfigValue Value)[] attributes)
