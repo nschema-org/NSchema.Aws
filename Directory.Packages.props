@@ -4,11 +4,11 @@
     <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
   </PropertyGroup>
   <ItemGroup>
-    <PackageVersion Include="AWSSDK.S3" Version="4.0.100" />
-    <PackageVersion Include="AWSSDK.SSO" Version="4.0.100" />
-    <PackageVersion Include="AWSSDK.SSOOIDC" Version="4.0.100" />
+    <PackageVersion Include="AWSSDK.S3" Version="4.0.101.3" />
+    <PackageVersion Include="AWSSDK.SSO" Version="4.0.100.5" />
+    <PackageVersion Include="AWSSDK.SSOOIDC" Version="4.0.100.5" />
     <PackageVersion Include="coverlet.collector" Version="10.0.1" />
-    <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="10.0.300" />
+    <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="10.0.301" />
     <PackageVersion Include="NSchema.Core" Version="5.0.0-alpha.1" />
     <PackageVersion Include="Testcontainers" Version="4.12.0" />
     <PackageVersion Include="Testcontainers.Minio" Version="4.12.0" />
