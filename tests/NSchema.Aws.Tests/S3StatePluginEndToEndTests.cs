@@ -2,8 +2,8 @@ using System.Text;
 using Amazon.S3;
 using Microsoft.Extensions.DependencyInjection;
 using NSchema.Aws.Tests.Fixtures;
+using NSchema.Configuration.Plugins;
 using NSchema.Plugins;
-using NSchema.Plugins.Model.Config;
 using NSchema.State.Backends;
 
 namespace NSchema.Aws.Tests;
@@ -25,10 +25,10 @@ public sealed class S3StatePluginEndToEndTests(MinioFixture fixture)
         builder.Services.AddSingleton(fixture.S3);
 
         var key = $"e2e/{Guid.NewGuid():N}.json";
-        var configured = new S3StatePlugin().Configure(builder, new PluginConfig("s3", new Dictionary<AttributeKey, ConfigValue>
+        var configured = new S3StatePlugin().Configure(builder, new PluginSettings("s3", new Dictionary<string, string?>
         {
-            [new AttributeKey("bucket")] = ConfigValue.OfString(fixture.BucketName),
-            [new AttributeKey("key")] = ConfigValue.OfString(key),
+            ["bucket"] = fixture.BucketName,
+            ["key"] = key,
         }));
         configured.IsSuccess.ShouldBeTrue();
 
