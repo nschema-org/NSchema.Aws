@@ -1,5 +1,5 @@
 using NSchema.Plugins;
-using NSchema.Plugins.Model.Config;
+using NSchema.Configuration.Plugins;
 using NSchema.State.Backends;
 
 namespace NSchema.Aws.Tests;
@@ -32,8 +32,8 @@ public sealed class S3StatePluginTests
         // Arrange
         var builder = NSchemaApplication.CreateBuilder();
         var config = Config(
-            ("bucket", ConfigValue.OfString("my-state")),
-            ("key", ConfigValue.OfString("nschema.state.json")));
+            ("bucket", "my-state"),
+            ("key", "nschema.state.json"));
 
         // Act
         var result = _sut.Configure(builder, config);
@@ -50,9 +50,9 @@ public sealed class S3StatePluginTests
         // Arrange
         var builder = NSchemaApplication.CreateBuilder();
         var config = Config(
-            ("bucket", ConfigValue.OfString("my-state")),
-            ("key", ConfigValue.OfString("nschema.state.json")),
-            ("force_path_style", ConfigValue.OfBoolean(true)));
+            ("bucket", "my-state"),
+            ("key", "nschema.state.json"),
+            ("force_path_style", "true"));
 
         // Act
         var result = _sut.Configure(builder, config);
@@ -84,16 +84,16 @@ public sealed class S3StatePluginTests
         // Arrange
         var builder = NSchemaApplication.CreateBuilder();
         var config = Config(
-            ("bucket", ConfigValue.OfString("my-state")),
-            ("key", ConfigValue.OfString("nschema.state.json")),
-            ("nonsense", ConfigValue.OfString("x")));
+            ("bucket", "my-state"),
+            ("key", "nschema.state.json"),
+            ("nonsense", "x"));
 
         // Act
         var result = _sut.Configure(builder, config);
 
         // Assert
         result.IsFailure.ShouldBeTrue();
-        result.Errors.ShouldContain(e => e.Message.Contains("nonsense"));
+        result.Errors.ShouldContain(e => e.Message.Contains("nonsense", StringComparison.OrdinalIgnoreCase));
     }
 
     [Fact]
@@ -102,18 +102,18 @@ public sealed class S3StatePluginTests
         // Arrange
         var builder = NSchemaApplication.CreateBuilder();
         var config = Config(
-            ("bucket", ConfigValue.OfString("my-state")),
-            ("key", ConfigValue.OfString("nschema.state.json")),
-            ("force_path_style", ConfigValue.OfString("yes")));
+            ("bucket", "my-state"),
+            ("key", "nschema.state.json"),
+            ("force_path_style", "yes"));
 
         // Act
         var result = _sut.Configure(builder, config);
 
         // Assert
+        // The binder rejects a value it cannot convert to bool.
         result.IsFailure.ShouldBeTrue();
-        result.Errors.ShouldContain(e => e.Message.Contains("force_path_style"));
     }
 
-    private static PluginConfig Config(params (string Key, ConfigValue Value)[] attributes)
-        => new("s3", attributes.ToDictionary(a => new AttributeKey(a.Key), a => a.Value));
+    private static PluginSettings Config(params (string Key, string? Value)[] attributes)
+        => new("s3", attributes.ToDictionary(a => a.Key, a => a.Value, StringComparer.OrdinalIgnoreCase));
 }

@@ -1,5 +1,5 @@
+using NSchema.Configuration.Plugins;
 using NSchema.Plugins;
-using NSchema.Plugins.Model.Config;
 
 namespace NSchema.Aws;
 
@@ -39,18 +39,22 @@ public sealed class S3StatePlugin : INSchemaStatePlugin
     }
 
     /// <inheritdoc />
-    public Result Configure(NSchemaApplicationBuilder builder, PluginConfig config)
+    public Result Configure(NSchemaApplicationBuilder builder, PluginSettings settings)
     {
-        var bound = config.Bind<S3Settings>();
-        var diagnostics = new List<Diagnostic>(bound.Diagnostics);
-        var settings = bound.Value!;
+        var bound = settings.Get<S3Settings>();
+        if (bound.Value is not { } options)
+        {
+            return Result.From(bound.Diagnostics);
+        }
 
-        if (string.IsNullOrEmpty(settings.Bucket))
+        var diagnostics = new List<Diagnostic>(bound.Diagnostics);
+
+        if (string.IsNullOrEmpty(options.Bucket))
         {
             diagnostics.Add(Diagnostic.Error(Source, "STATE s3: bucket is required."));
         }
 
-        if (string.IsNullOrEmpty(settings.Key))
+        if (string.IsNullOrEmpty(options.Key))
         {
             diagnostics.Add(Diagnostic.Error(Source, "STATE s3: key is required."));
         }
@@ -60,7 +64,7 @@ public sealed class S3StatePlugin : INSchemaStatePlugin
             return Result.From(diagnostics);
         }
 
-        builder.UseS3StateStore(settings.Bucket!, settings.Key!, clientConfig => clientConfig.ForcePathStyle = settings.ForcePathStyle);
+        builder.UseS3StateStore(options.Bucket!, options.Key!, clientConfig => clientConfig.ForcePathStyle = options.ForcePathStyle);
         return Result.From(diagnostics);
     }
 }
