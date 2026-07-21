@@ -1,4 +1,5 @@
 using NSchema.Plugins;
+using NSchema.Plugins.Model.Config;
 using NSchema.State.Backends;
 
 namespace NSchema.Aws.Tests;
