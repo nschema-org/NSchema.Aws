@@ -3,6 +3,7 @@ using Amazon.S3;
 using Microsoft.Extensions.DependencyInjection;
 using NSchema.Aws.Tests.Fixtures;
 using NSchema.Plugins;
+using NSchema.Plugins.Model.Config;
 using NSchema.State.Backends;
 
 namespace NSchema.Aws.Tests;

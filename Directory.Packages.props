@@ -9,7 +9,7 @@
     <PackageVersion Include="AWSSDK.SSOOIDC" Version="4.0.100.5" />
     <PackageVersion Include="coverlet.collector" Version="10.0.1" />
     <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="10.0.301" />
-    <PackageVersion Include="NSchema.Core" Version="5.0.0-alpha.2" />
+    <PackageVersion Include="NSchema.Core" Version="5.0.0-alpha.4" />
     <PackageVersion Include="Testcontainers.Minio" Version="4.13.0" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.8.1" />
     <PackageVersion Include="NSubstitute" Version="6.0.0" />
