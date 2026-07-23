@@ -1,5 +1,6 @@
 using NSchema.Configuration.Plugins;
 using NSchema.Plugins;
+using NSchema.Project.Nsql.Syntax.Blocks;
 using NSchema.State.Backends;
 
 namespace NSchema.Aws.Tests;
@@ -14,7 +15,13 @@ public sealed class S3StatePluginTests
 
     [Fact]
     public void GetScaffoldTemplate_ReturnsStateBlock()
-        => _sut.GetScaffoldTemplate(new ScaffoldContext()).ShouldContain("STATE s3");
+    {
+        var block = _sut.GetScaffoldTemplate(new ScaffoldContext());
+
+        block.Keyword.ShouldBe(BlockKeyword.State);
+        block.Label!.Value.ShouldBe("s3");
+        block.Attributes.Single(a => a.Key == "bucket").Value.ShouldBe("my-nschema-state");
+    }
 
     [Fact]
     public void GetScaffoldTemplate_ForEnvironment_NamespacesTheKey()
@@ -23,7 +30,7 @@ public sealed class S3StatePluginTests
         // its own state object.
         var overlay = _sut.GetScaffoldTemplate(new ScaffoldContext { EnvironmentName = "prod" });
 
-        overlay.ShouldContain("key     = 'prod/nschema.state.json'");
+        overlay.Attributes.Single(a => a.Key == "key").Value.ShouldBe("prod/nschema.state.json");
     }
 
     [Fact]
