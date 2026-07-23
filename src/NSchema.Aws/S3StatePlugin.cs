@@ -1,5 +1,9 @@
 using NSchema.Configuration.Plugins;
 using NSchema.Plugins;
+using NSchema.Project.Nsql;
+using NSchema.Project.Nsql.Syntax;
+using NSchema.Project.Nsql.Syntax.Blocks;
+using NSchema.Project.Nsql.Tokens;
 
 namespace NSchema.Aws;
 
@@ -19,23 +23,26 @@ public sealed class S3StatePlugin : INSchemaStatePlugin
     }
 
     /// <inheritdoc />
-    public string GetScaffoldTemplate(ScaffoldContext context)
+    public BlockStatement GetScaffoldTemplate(ScaffoldContext context)
     {
-        var lines = new List<string> { "STATE s3 (" };
+        var key = context.EnvironmentName is { } environment ? $"{environment}/nschema.state.json" : "nschema.state.json";
+        var block = new BlockStatement(BlockKeyword.State, Identifier.Synthetic(Source), new SeparatedSyntaxList<BlockAttribute>(
+        [
+            new BlockAttribute("bucket", "my-nschema-state"),
+            new BlockAttribute("key", key),
+        ]));
 
         // The base configuration explains where AWS credentials come from; an environment overlay only restates the
         // block to override the key, so it stays terse.
-        if (context.EnvironmentName is null)
-        {
-            lines.Add("  -- Credentials come from the standard AWS chain (environment, shared profile, or");
-            lines.Add("  -- instance role), not from this block.");
-        }
-
-        lines.Add("  bucket  = 'my-nschema-state',");
-        var key = context.EnvironmentName is { } environment ? $"{environment}/nschema.state.json" : "nschema.state.json";
-        lines.Add($"  key     = '{key}'");
-        lines.Add(");");
-        return string.Join("\n", lines);
+        return context.EnvironmentName is null
+            ? block with
+            {
+                DocComment = new Token(
+                    TokenKind.DocComment,
+                    "Credentials come from the standard AWS chain (environment, shared profile, or\ninstance role), not from this block.",
+                    SourcePosition.None),
+            }
+            : block;
     }
 
     /// <inheritdoc />
