@@ -2,7 +2,7 @@ using NSchema.Configuration.Plugins;
 using NSchema.Plugins;
 using NSchema.Project.Nsql;
 using NSchema.Project.Nsql.Syntax;
-using NSchema.Project.Nsql.Syntax.Blocks;
+using NSchema.Project.Nsql.Syntax.Settings;
 using NSchema.Project.Nsql.Tokens;
 
 namespace NSchema.Aws;
@@ -23,13 +23,13 @@ public sealed class S3StatePlugin : INSchemaStatePlugin
     }
 
     /// <inheritdoc />
-    public BlockStatement GetScaffoldTemplate(ScaffoldContext context)
+    public SettingsStatement GetScaffoldTemplate(ScaffoldContext context)
     {
         var key = context.EnvironmentName is { } environment ? $"{environment}/nschema.state.json" : "nschema.state.json";
-        var block = new BlockStatement(BlockKeyword.State, Identifier.Synthetic(Source), new SeparatedSyntaxList<BlockAttribute>(
+        var block = new SettingsStatement(SettingsKeyword.State, Identifier.Synthetic(Source), new SeparatedSyntaxList<Setting>(
         [
-            new BlockAttribute("bucket", "my-nschema-state"),
-            new BlockAttribute("key", key),
+            new Setting("bucket", "my-nschema-state"),
+            new Setting("key", key),
         ]));
 
         // The base configuration explains where AWS credentials come from; an environment overlay only restates the
