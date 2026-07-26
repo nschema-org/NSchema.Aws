@@ -13,6 +13,7 @@ namespace NSchema.Aws;
 public sealed class S3StatePlugin : INSchemaStatePlugin
 {
     private const string Source = "s3";
+    private const string DefaultBucket = "my-nschema-state";
 
     /// <summary>The settings a STATE statement binds onto.</summary>
     private sealed class S3Settings
@@ -23,12 +24,22 @@ public sealed class S3StatePlugin : INSchemaStatePlugin
     }
 
     /// <inheritdoc />
+    /// <remarks>
+    /// Only the bucket is asked for: the key follows from the environment, which is the plugin's own knowledge, and
+    /// credentials come from the AWS chain rather than from an answer.
+    /// </remarks>
+    public IReadOnlyList<ScaffoldPrompt> GetScaffoldPrompts(ScaffoldContext context) =>
+    [
+        new() { Key = "bucket", Label = "S3 bucket", Default = DefaultBucket },
+    ];
+
+    /// <inheritdoc />
     public SettingsStatement GetScaffoldTemplate(ScaffoldContext context)
     {
         var key = context.EnvironmentName is { } environment ? $"{environment}/nschema.state.json" : "nschema.state.json";
         var block = new SettingsStatement(SettingsKeyword.State, Identifier.Synthetic(Source), new SeparatedSyntaxList<Setting>(
         [
-            new Setting("bucket", "my-nschema-state"),
+            new Setting("bucket", context.Answer("bucket") ?? DefaultBucket),
             new Setting("key", key),
         ]));
 

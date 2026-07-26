@@ -19,6 +19,10 @@ As a consequence, breaking changes that are specific to this provider (rather th
 - **The plugin is configured by a `STATE s3` block** instead of `BACKEND s3`, and the scaffold template renders the new form. The scaffold no longer pins a version in the block — the host authors the `PLUGIN` statement.
 - The S3 state store implements the renamed `IDatabaseStateStore` (was `ISchemaStateStore`), and the lock's `StateLockInfo` carries the new `LockId`/`LockHolder` value objects.
 
+### Added
+
+- **`new` asks which bucket to use.** The plugin declares the bucket as a scaffolding question; the key still follows from the environment, and credentials still come from the AWS chain.
+
 ## [4.0.0] - 2026-07-01
 
 ### Added
