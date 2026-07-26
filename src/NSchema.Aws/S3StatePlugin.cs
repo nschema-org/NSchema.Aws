@@ -1,5 +1,6 @@
 using NSchema.Configuration.Plugins;
 using NSchema.Plugins;
+using NSchema.Project.Nsql;
 using NSchema.Project.Nsql.Syntax.Settings;
 
 namespace NSchema.Aws;
@@ -31,7 +32,7 @@ public sealed class S3StatePlugin : INSchemaStatePlugin
     ];
 
     /// <inheritdoc />
-    public SettingsStatement GetScaffoldTemplate(ScaffoldContext context)
+    public NsqlDocument GetScaffoldTemplate(ScaffoldContext context)
     {
         var key = context.EnvironmentName is { } environment ? $"{environment}/nschema.state.json" : "nschema.state.json";
         var block = SettingsStatement.State(Source)
@@ -40,9 +41,11 @@ public sealed class S3StatePlugin : INSchemaStatePlugin
 
         // The base configuration explains where AWS credentials come from; an environment overlay only restates the
         // block to override the key, so it stays terse.
-        return context.EnvironmentName is null
-            ? block.WithDocComment("Credentials come from the standard AWS chain (environment, shared profile, or\ninstance role), not from this block.")
-            : block;
+        return new NsqlDocument([
+            context.EnvironmentName is null
+                ? block.WithDocComment("Credentials come from the standard AWS chain (environment, shared profile, or\ninstance role), not from this block.")
+                : block,
+        ]);
     }
 
     /// <inheritdoc />

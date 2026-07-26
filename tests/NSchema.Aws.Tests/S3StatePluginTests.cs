@@ -1,5 +1,6 @@
 using NSchema.Configuration.Plugins;
 using NSchema.Plugins;
+using NSchema.Project.Nsql;
 using NSchema.Project.Nsql.Syntax.Settings;
 using NSchema.State.Backends;
 
@@ -13,10 +14,13 @@ public sealed class S3StatePluginTests
 {
     private readonly S3StatePlugin _sut = new();
 
+    private static SettingsStatement Configured(NsqlDocument document) =>
+        document.Statements.OfType<SettingsStatement>().ShouldHaveSingleItem();
+
     [Fact]
     public void GetScaffoldTemplate_ReturnsStateBlock()
     {
-        var block = _sut.GetScaffoldTemplate(new ScaffoldContext());
+        var block = Configured(_sut.GetScaffoldTemplate(new ScaffoldContext()));
 
         block.Keyword.ShouldBe(SettingsKeyword.State);
         block.Label!.Value.ShouldBe("s3");
@@ -28,7 +32,7 @@ public sealed class S3StatePluginTests
     {
         // An environment overlay restates the state block with an environment-scoped key so each environment keeps
         // its own state object.
-        var overlay = _sut.GetScaffoldTemplate(new ScaffoldContext { EnvironmentName = "prod" });
+        var overlay = Configured(_sut.GetScaffoldTemplate(new ScaffoldContext { EnvironmentName = "prod" }));
 
         overlay.Settings.Single(a => a.Key == "key").Value.ShouldBe("prod/nschema.state.json");
     }
