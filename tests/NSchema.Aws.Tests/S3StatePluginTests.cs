@@ -2,7 +2,7 @@ using NSchema.Configuration.Plugins;
 using NSchema.Plugins;
 using NSchema.Project.Nsql;
 using NSchema.Project.Nsql.Syntax.Settings;
-using NSchema.State.Backends;
+using NSchema.State.Plugins;
 
 namespace NSchema.Aws.Tests;
 
@@ -28,13 +28,15 @@ public sealed class S3StatePluginTests
     }
 
     [Fact]
-    public void GetScaffoldTemplate_ForEnvironment_NamespacesTheKey()
+    public void GetScaffoldTemplate_ForEnvironment_CarriesOnlyTheKeyThatMoves()
     {
-        // An environment overlay restates the state block with an environment-scoped key so each environment keeps
-        // its own state object.
+        // Act — an overlay refines the statement it restates, so each environment keeps its own state object without
+        // restating the bucket.
         var overlay = Configured(_sut.GetScaffoldTemplate(new ScaffoldContext { EnvironmentName = "prod" }));
 
-        overlay.Settings.Single(a => a.Key == "key").Value.ShouldBe("prod/nschema.state.json");
+        // Assert
+        overlay.Settings.ShouldHaveSingleItem().Key.ShouldBe("key");
+        overlay.Settings[0].Value.ShouldBe("prod/nschema.state.json");
     }
 
     [Fact]

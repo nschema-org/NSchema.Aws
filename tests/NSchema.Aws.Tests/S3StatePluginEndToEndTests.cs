@@ -4,7 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using NSchema.Aws.Tests.Fixtures;
 using NSchema.Configuration.Plugins;
 using NSchema.Plugins;
-using NSchema.State.Backends;
+using NSchema.State.Plugins;
 
 namespace NSchema.Aws.Tests;
 
@@ -38,7 +38,7 @@ public sealed class S3StatePluginEndToEndTests(MinioFixture fixture)
 
         // Act — round-trip through the plugin-wired store.
         await store.Write(payload, TestContext.Current.CancellationToken);
-        var read = await store.Read(TestContext.Current.CancellationToken);
+        var read = (await store.Read(TestContext.Current.CancellationToken)).Require().Payload;
 
         // Assert
         read.ShouldNotBeNull();
