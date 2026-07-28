@@ -3,9 +3,9 @@ using System.Text.Json;
 using Amazon.S3;
 using Amazon.S3.Model;
 using Microsoft.Extensions.Options;
-using NSchema.State.Backends;
 using NSchema.State.Locks;
-using NSchema.State.Locks.Backends;
+using NSchema.State.Locks.Plugins;
+using NSchema.State.Plugins;
 
 namespace NSchema.Aws.State;
 
@@ -21,25 +21,49 @@ internal sealed class S3SchemaStateStore(IOptions<S3SchemaStateStoreOptions> opt
 
     private string LockKey => options.Value.Key + ".lock";
 
+    // S3 reports every anticipated failure — no bucket, no credentials, no network — as AmazonS3Exception, so that is
+    // what is caught and reported. Anything else escaping is a defect in this store, and the engine treats it as one.
+    private const string Source = "s3";
+
     /// <inheritdoc />
-    public async Task<ReadOnlyMemory<byte>?> Read(CancellationToken cancellationToken = default)
+    public async Task<Result<StoreReadResult>> Read(CancellationToken cancellationToken = default)
     {
-        var state = await ReadObject(Key, cancellationToken);
-        return state;
+        try
+        {
+            return new StoreReadResult(await ReadObject(Key, cancellationToken));
+        }
+        catch (AmazonS3Exception exception)
+        {
+            return Result.Failure<StoreReadResult>(Unreachable(exception));
+        }
     }
 
     /// <inheritdoc />
-    public Task Write(ReadOnlyMemory<byte> state, CancellationToken cancellationToken = default) =>
-        s3.PutObjectAsync(new PutObjectRequest
+    public async Task<Result> Write(ReadOnlyMemory<byte> state, CancellationToken cancellationToken = default)
+    {
+        try
         {
-            BucketName = Bucket,
-            Key = Key,
-            InputStream = new MemoryStream(state.ToArray()),
-            ContentType = "application/json",
-        }, cancellationToken);
+            await s3.PutObjectAsync(new PutObjectRequest
+            {
+                BucketName = Bucket,
+                Key = Key,
+                InputStream = new MemoryStream(state.ToArray()),
+                ContentType = "application/json",
+            }, cancellationToken);
+
+            return Result.Success();
+        }
+        catch (AmazonS3Exception exception)
+        {
+            return Result.From(Unreachable(exception));
+        }
+    }
+
+    private static Diagnostic Unreachable(Exception exception) =>
+        Diagnostic.Error(Source, $"Could not reach the state store: {ExceptionMessage.Describe(exception):text}");
 
     /// <inheritdoc />
-    public async Task<IStateLockHandle> Acquire(StateLockInfo info, CancellationToken cancellationToken = default)
+    public async Task<Result<IStateLockHandle>> Acquire(StateLockInfo info, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -62,17 +86,40 @@ internal sealed class S3SchemaStateStore(IOptions<S3SchemaStateStoreOptions> opt
                     : $"The state is locked by '{existing.Who}' (operation '{existing.Operation}') since {existing.CreatedUtc:u}.",
                 existing!);
         }
+        catch (AmazonS3Exception exception)
+        {
+            return Result.Failure<IStateLockHandle>(Unreachable(exception));
+        }
 
-        return new Handle(this, info);
+        return Result.Success<IStateLockHandle>(new Handle(this, info));
     }
 
     /// <inheritdoc />
-    public Task<StateLockInfo?> Peek(CancellationToken cancellationToken = default) =>
-        ReadLockInfo(cancellationToken);
+    public async Task<Result<LockPeekResult>> Peek(CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            return new LockPeekResult(await ReadLockInfo(cancellationToken));
+        }
+        catch (AmazonS3Exception exception)
+        {
+            return Result.Failure<LockPeekResult>(Unreachable(exception));
+        }
+    }
 
     /// <inheritdoc />
-    public ValueTask Release(CancellationToken cancellationToken = default) =>
-        new(ReleaseLock(cancellationToken));
+    public async ValueTask<Result> Release(CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            await ReleaseLock(cancellationToken);
+            return Result.Success();
+        }
+        catch (AmazonS3Exception exception)
+        {
+            return Result.From(Unreachable(exception));
+        }
+    }
 
     private async Task<ReadOnlyMemory<byte>?> ReadObject(string key, CancellationToken cancellationToken)
     {
@@ -113,12 +160,22 @@ internal sealed class S3SchemaStateStore(IOptions<S3SchemaStateStoreOptions> opt
 
         public StateLockInfo Info => info;
 
-        public async ValueTask Release(CancellationToken cancellationToken = default)
+        public async ValueTask<Result> Release(CancellationToken cancellationToken = default)
         {
             // Release is idempotent: only the first call deletes the lock object.
-            if (Interlocked.Exchange(ref _released, 1) == 0)
+            if (Interlocked.Exchange(ref _released, 1) != 0)
+            {
+                return Result.Success();
+            }
+
+            try
             {
                 await store.ReleaseLock(cancellationToken);
+                return Result.Success();
+            }
+            catch (AmazonS3Exception exception)
+            {
+                return Result.From(Unreachable(exception));
             }
         }
     }

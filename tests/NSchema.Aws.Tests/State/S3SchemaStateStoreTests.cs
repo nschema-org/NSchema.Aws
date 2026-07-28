@@ -28,7 +28,7 @@ public sealed class S3SchemaStateStoreTests(MinioFixture fixture)
     {
         var sut = CreateSut();
 
-        var result = await sut.Read(TestContext.Current.CancellationToken);
+        var result = (await sut.Read(TestContext.Current.CancellationToken)).Require().Payload;
 
         result.ShouldBeNull();
     }
@@ -40,7 +40,7 @@ public sealed class S3SchemaStateStoreTests(MinioFixture fixture)
         var original = Payload("""{"schema":"v1"}""");
 
         await sut.Write(original, TestContext.Current.CancellationToken);
-        var result = await sut.Read(TestContext.Current.CancellationToken);
+        var result = (await sut.Read(TestContext.Current.CancellationToken)).Require().Payload;
 
         result.ShouldNotBeNull();
         result.Value.ToArray().ShouldBe(original.ToArray());
@@ -55,7 +55,7 @@ public sealed class S3SchemaStateStoreTests(MinioFixture fixture)
 
         await sut.Write(Payload("""{"schema":"v1"}"""), TestContext.Current.CancellationToken);
         await sut.Write(second, TestContext.Current.CancellationToken);
-        var result = await sut.Read(TestContext.Current.CancellationToken);
+        var result = (await sut.Read(TestContext.Current.CancellationToken)).Require().Payload;
 
         result.ShouldNotBeNull();
         result.Value.ToArray().ShouldBe(second.ToArray());
@@ -66,7 +66,7 @@ public sealed class S3SchemaStateStoreTests(MinioFixture fixture)
     {
         var sut = CreateSut();
 
-        var handle = await sut.Acquire(Lock("apply"), TestContext.Current.CancellationToken);
+        var handle = (await sut.Acquire(Lock("apply"), TestContext.Current.CancellationToken)).Require();
 
         handle.Info.Id.Value.ShouldNotBeNullOrEmpty();
     }
@@ -75,7 +75,7 @@ public sealed class S3SchemaStateStoreTests(MinioFixture fixture)
     public async Task Acquire_WhenAlreadyLocked_ThrowsWithExistingLockInfo()
     {
         var sut = CreateSut();
-        var first = await sut.Acquire(Lock("apply"), TestContext.Current.CancellationToken);
+        var first = (await sut.Acquire(Lock("apply"), TestContext.Current.CancellationToken)).Require();
 
         var ex = await Should.ThrowAsync<StateLockedException>(
             () => sut.Acquire(Lock("destroy"), TestContext.Current.CancellationToken));
@@ -91,10 +91,10 @@ public sealed class S3SchemaStateStoreTests(MinioFixture fixture)
         var key = $"state/{Guid.NewGuid():N}.json";
         var sut = CreateSut(key);
 
-        var first = await sut.Acquire(Lock("apply"), TestContext.Current.CancellationToken);
+        var first = (await sut.Acquire(Lock("apply"), TestContext.Current.CancellationToken)).Require();
         await first.Release(TestContext.Current.CancellationToken);
 
-        var second = await sut.Acquire(Lock("apply"), TestContext.Current.CancellationToken);
+        var second = (await sut.Acquire(Lock("apply"), TestContext.Current.CancellationToken)).Require();
         second.Info.Id.ShouldNotBe(first.Info.Id);
     }
 
@@ -102,7 +102,7 @@ public sealed class S3SchemaStateStoreTests(MinioFixture fixture)
     public async Task ReleaseHandle_IsIdempotent()
     {
         var sut = CreateSut();
-        var handle = await sut.Acquire(Lock("apply"), TestContext.Current.CancellationToken);
+        var handle = (await sut.Acquire(Lock("apply"), TestContext.Current.CancellationToken)).Require();
 
         await handle.Release(TestContext.Current.CancellationToken);
         await Should.NotThrowAsync(async () => await handle.Release(TestContext.Current.CancellationToken));
@@ -112,13 +112,13 @@ public sealed class S3SchemaStateStoreTests(MinioFixture fixture)
     public async Task Release_WhenLocked_RemovesLock()
     {
         var sut = CreateSut();
-        await sut.Acquire(Lock("apply"), TestContext.Current.CancellationToken);
+        (await sut.Acquire(Lock("apply"), TestContext.Current.CancellationToken)).Require();
 
         await sut.Release(TestContext.Current.CancellationToken);
 
         // The lock is now free to re-acquire.
-        (await sut.Peek(TestContext.Current.CancellationToken)).ShouldBeNull();
-        var handle = await sut.Acquire(Lock("apply"), TestContext.Current.CancellationToken);
+        (await sut.Peek(TestContext.Current.CancellationToken)).Require().Held.ShouldBeNull();
+        var handle = (await sut.Acquire(Lock("apply"), TestContext.Current.CancellationToken)).Require();
         handle.Info.Id.Value.ShouldNotBeNullOrEmpty();
     }
 
@@ -134,9 +134,9 @@ public sealed class S3SchemaStateStoreTests(MinioFixture fixture)
     public async Task Peek_WhenLocked_ReturnsInfoWithoutRemovingTheLock()
     {
         var sut = CreateSut();
-        var handle = await sut.Acquire(Lock("apply"), TestContext.Current.CancellationToken);
+        var handle = (await sut.Acquire(Lock("apply"), TestContext.Current.CancellationToken)).Require();
 
-        var info = await sut.Peek(TestContext.Current.CancellationToken);
+        var info = (await sut.Peek(TestContext.Current.CancellationToken)).Require().Held;
 
         info.ShouldNotBeNull();
         info.Operation.ShouldBe("apply");
@@ -152,7 +152,7 @@ public sealed class S3SchemaStateStoreTests(MinioFixture fixture)
     {
         var sut = CreateSut();
 
-        var info = await sut.Peek(TestContext.Current.CancellationToken);
+        var info = (await sut.Peek(TestContext.Current.CancellationToken)).Require().Held;
 
         info.ShouldBeNull();
     }

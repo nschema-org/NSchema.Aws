@@ -13,14 +13,6 @@ public sealed class S3StatePlugin : INSchemaStatePlugin
     private const string Source = "s3";
     private const string DefaultBucket = "my-nschema-state";
 
-    /// <summary>The settings a STATE statement binds onto.</summary>
-    private sealed class S3Settings
-    {
-        public string? Bucket { get; set; }
-        public string? Key { get; set; }
-        public bool ForcePathStyle { get; set; }
-    }
-
     /// <inheritdoc />
     /// <remarks>
     /// Only the bucket is asked for: the key follows from the environment, which is the plugin's own knowledge, and
@@ -34,17 +26,18 @@ public sealed class S3StatePlugin : INSchemaStatePlugin
     /// <inheritdoc />
     public NsqlDocument GetScaffoldTemplate(ScaffoldContext context)
     {
-        var key = context.EnvironmentName is { } environment ? $"{environment}/nschema.state.json" : "nschema.state.json";
-        var block = SettingsStatement.State(Source)
-            .WithSetting("bucket", context.Answer("bucket") ?? DefaultBucket)
-            .WithSetting("key", key);
+        // An overlay refines the statement it restates, so it carries only the key that moves; the bucket it omits
+        // carries through from the base.
+        if (context.EnvironmentName is { } environment)
+        {
+            return new NsqlDocument([SettingsStatement.State(Source).WithSetting("key", $"{environment}/nschema.state.json")]);
+        }
 
-        // The base configuration explains where AWS credentials come from; an environment overlay only restates the
-        // block to override the key, so it stays terse.
         return new NsqlDocument([
-            context.EnvironmentName is null
-                ? block.WithDocComment("Credentials come from the standard AWS chain (environment, shared profile, or\ninstance role), not from this block.")
-                : block,
+            SettingsStatement.State(Source)
+                .WithSetting("bucket", context.Answer("bucket") ?? DefaultBucket)
+                .WithSetting("key", "nschema.state.json")
+                .WithDocComment("Credentials come from the standard AWS chain (environment, shared profile, or\ninstance role), not from this block."),
         ]);
     }
 
