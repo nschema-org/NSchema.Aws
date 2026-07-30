@@ -54,12 +54,12 @@ public sealed class S3StatePlugin : INSchemaStatePlugin
 
         if (string.IsNullOrEmpty(options.Bucket))
         {
-            diagnostics.Add(Diagnostic.Error(Source, "STATE s3: bucket is required."));
+            diagnostics.Add(Diagnostic.Error(Source, "missing-bucket", "STATE s3: bucket is required."));
         }
 
         if (string.IsNullOrEmpty(options.Key))
         {
-            diagnostics.Add(Diagnostic.Error(Source, "STATE s3: key is required."));
+            diagnostics.Add(Diagnostic.Error(Source, "missing-key", "STATE s3: key is required."));
         }
 
         if (diagnostics.Any(d => d.Severity == DiagnosticSeverity.Error))

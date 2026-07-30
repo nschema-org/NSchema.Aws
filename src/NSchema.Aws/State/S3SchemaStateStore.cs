@@ -60,7 +60,7 @@ internal sealed class S3SchemaStateStore(IOptions<S3SchemaStateStoreOptions> opt
     }
 
     private static Diagnostic Unreachable(Exception exception) =>
-        Diagnostic.Error(Source, $"Could not reach the state store: {ExceptionMessage.Describe(exception):text}");
+        Diagnostic.Error(Source, "state-unreachable", $"Could not reach the state store: {ExceptionMessage.Describe(exception):text}");
 
     /// <inheritdoc />
     public async Task<Result<IStateLockHandle>> Acquire(StateLockInfo info, CancellationToken cancellationToken = default)
