@@ -71,5 +71,9 @@ Initial version, tracking NSchema 2.0.0.
 
 - `UseStateStoreS3(...)` builder extensions for configuring an S3 state store with bucket and key.
 
+[5.0.0]: https://github.com/nschema-org/NSchema.Aws/compare/v4.0.0...v5.0.0
+[4.0.0]: https://github.com/nschema-org/NSchema.Aws/compare/v3.2.0...v4.0.0
+[3.2.0]: https://github.com/nschema-org/NSchema.Aws/compare/v3.1.0...v3.2.0
+[3.1.0]: https://github.com/nschema-org/NSchema.Aws/compare/v3.0.0...v3.1.0
 [3.0.0]: https://github.com/nschema-org/NSchema.Aws/compare/v2.0.0...v3.0.0
 [2.0.0]: https://github.com/nschema-org/NSchema.Aws/releases/tag/v2.0.0
