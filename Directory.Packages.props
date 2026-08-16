@@ -4,15 +4,15 @@
     <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
   </PropertyGroup>
   <ItemGroup>
-    <PackageVersion Include="AWSSDK.S3" Version="4.0.101.6" />
-    <PackageVersion Include="AWSSDK.SSO" Version="4.0.100.5" />
-    <PackageVersion Include="AWSSDK.SSOOIDC" Version="4.0.100.5" />
+    <PackageVersion Include="AWSSDK.S3" Version="4.0.102.1" />
+    <PackageVersion Include="AWSSDK.SSO" Version="4.0.100.8" />
+    <PackageVersion Include="AWSSDK.SSOOIDC" Version="4.0.100.8" />
     <PackageVersion Include="coverlet.collector" Version="10.0.1" />
-    <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="10.0.301" />
-    <PackageVersion Include="NSchema.Core" Version="5.0.0" />
-    <PackageVersion Include="Testcontainers.Minio" Version="4.13.0" />
-    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.8.1" />
-    <PackageVersion Include="NSubstitute" Version="6.0.0" />
+    <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="10.0.400" />
+    <PackageVersion Include="NSchema.Core" Version="5.10.2" />
+    <PackageVersion Include="Testcontainers.Minio" Version="4.14.0" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.9.0" />
+    <PackageVersion Include="NSubstitute" Version="6.2.0" />
     <PackageVersion Include="Shouldly" Version="4.3.0" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.5" />
     <PackageVersion Include="xunit.v3" Version="3.2.2" />
